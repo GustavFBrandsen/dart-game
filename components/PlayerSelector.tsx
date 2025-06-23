@@ -79,7 +79,7 @@ export default function PlayerSelector({
   };
 
   return (
-    <View style={{ marginVertical: 20, width: '100%' }}>
+    <View style={{ marginVertical: 20, width: '100%', paddingTop: 30 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
         <View style={[styles.teamColorIndicator, { backgroundColor: teamColor }]} />
         <Text style={{ fontSize: 16, fontWeight: 'bold', marginLeft: 8 }}>
@@ -121,18 +121,14 @@ export default function PlayerSelector({
                 }
               }}
             >
-              <View style={[
-                styles.checkbox, 
-                selected && styles.checkboxChecked,
-                selected && { borderColor: teamColor, backgroundColor: teamColor },
-                {
-                  borderColor: color ? color : '#ccc',
-                  backgroundColor: isAssigned ? color : 'white',
-                }
-              ]}>
-                {selected && <Text style={styles.checkmark}>✓</Text>}
-                {isAssigned && !selected && (
-                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>✓</Text>
+              <View
+                style={[
+                  styles.checkbox,
+                  (selected || isAssigned) && { borderColor: color || teamColor, backgroundColor: color || teamColor },
+                ]}
+              >
+                {(selected || isAssigned) && (
+                  <Text style={styles.checkmark}>✓</Text>
                 )}
               </View>
               <Text style={[styles.playerName, { color: isAssigned ? '#fff' : '#222' }]}>
@@ -143,20 +139,26 @@ export default function PlayerSelector({
         }}
       />
 
-      <TextInput
-        value={newName}
-        onChangeText={setNewName}
-        placeholder="Add new player"
-        style={styles.input}
-        onSubmitEditing={handleAdd}
-      />
-      <TouchableOpacity
-        style={[styles.addButton, !newName.trim() && styles.disabledButton]}
-        onPress={handleAdd}
-        disabled={!newName.trim()}
-      >
-        <Text style={styles.buttonText}>Add Player</Text>
-      </TouchableOpacity>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+        <TextInput
+          value={newName}
+          onChangeText={setNewName}
+          placeholder="Add new player"
+          placeholderTextColor="#888"
+          style={[styles.input]}
+          onSubmitEditing={handleAdd}
+        />
+        <TouchableOpacity
+          style={[
+            styles.addButton,
+            !newName.trim() && styles.disabledButton
+          ]}
+          onPress={handleAdd}
+          disabled={!newName.trim()}
+        >
+          <Text style={styles.buttonText}>Add Player</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -202,6 +204,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 16,
     borderRadius: 4,
+    width: '60%',
+    height: 40,
+    marginLeft: 'auto',
+    marginRight: 'auto',
   },
   addButton: {
     backgroundColor: '#2196F3',
@@ -209,6 +215,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     alignItems: 'center',
     marginTop: 5,
+    width: '30%',
+    height: 40,
+    marginBottom: 5,
+    marginLeft: 'auto',
+    marginRight: 'auto',
   },
   disabledButton: {
     backgroundColor: '#cccccc',

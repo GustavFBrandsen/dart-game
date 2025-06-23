@@ -1,7 +1,13 @@
-import * as Crypto from 'expo-crypto';
 import React, { useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { addPlayer, getPlayers, Player } from '../storage/players';
+
+function getUUID() {
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return 'id-' + Math.random().toString(36).substr(2, 16);
+}
 
 type PlayerSelectorProps = {
   title: string;
@@ -14,9 +20,11 @@ type PlayerSelectorProps = {
   assignedPlayerIds: string[];
   assignedPlayerColors: Record<string, string>;
   onAssignedPlayerPress?: (player: Player) => void;
+  mode: 'solo' | 'duos';
 };
 
 export default function PlayerSelector({
+  mode,
   title,
   teamColor,
   selectedPlayers,
@@ -56,7 +64,7 @@ export default function PlayerSelector({
     const trimmed = newName.trim();
     if (!trimmed) return;
 
-    const newPlayer = { id: Crypto.randomUUID(), name: trimmed };
+    const newPlayer = { id: getUUID(), name: trimmed };
 
     try {
       await addPlayer(newPlayer);
@@ -79,14 +87,16 @@ export default function PlayerSelector({
   };
 
   return (
-    <View style={{ marginVertical: 20, width: '100%', paddingTop: 30 }}>
+    <View style={{ marginVertical: 20, width: '100%', paddingTop: 30, maxHeight: 448 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
         <View style={[styles.teamColorIndicator, { backgroundColor: teamColor }]} />
         <Text style={{ fontSize: 16, fontWeight: 'bold', marginLeft: 8 }}>
           {title}
         </Text>
         <Text style={{ marginLeft: 'auto' }}>
-          {selectedPlayers.length}/{maxPlayers}
+          {mode === 'solo'
+            ? `${assignedPlayerIds.length} / ∞`
+            : `${selectedPlayers.length}/${maxPlayers}`}
         </Text>
       </View>
 

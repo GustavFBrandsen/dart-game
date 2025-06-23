@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: 180,
     height: 40,
-    marginVertical: 10,
+    top: 30,
   },
   button: {
     flex: 1,

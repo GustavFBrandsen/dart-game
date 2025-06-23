@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, Vibration, View } from 'react-native';
+import Footer from '../components/Footer';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -107,7 +108,7 @@ export default function GameScreen() {
   }, [turnIdx, teamsWithOrder, navigation]);
 
   return (
-    <View style={{ flex: 1, flexDirection: 'row' }}>
+    <View style={{ flexDirection: 'row', top: 60, height: '93%' }}>
       {/* Custom popup */}
       {popup && (
         <View style={styles.popupOverlay}>
@@ -182,6 +183,7 @@ export default function GameScreen() {
           <Text style={styles.endTurnButtonText}>End turn</Text>
         </TouchableOpacity>
       </View>
+      <Footer />
     </View>
   );
 }
@@ -193,8 +195,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     backgroundColor: '#f0f0f0',
     alignItems: 'center',
-    height: 48, // Add this line
-    justifyContent: 'center', // Add this for vertical centering
+    height: 48,
+    justifyContent: 'center',
   },
   activeTurnHeaderCell: {
     backgroundColor: '#8be78b',
@@ -209,7 +211,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 48, // Add this line
+    height: 48,
   },
   cellText: {
     fontSize: 24,
@@ -219,7 +221,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: 70,
     alignItems: 'center',
     zIndex: 10,
   },

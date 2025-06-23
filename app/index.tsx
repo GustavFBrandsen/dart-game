@@ -2,6 +2,7 @@ import * as Crypto from 'expo-crypto';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Footer from '../components/Footer';
 import ModeToggle from '../components/ModeToggle';
 import PlayerSelector from '../components/PlayerSelector';
 
@@ -12,11 +13,12 @@ const TEAM_COLORS = [
   '#99FF99', // soft green
   '#FFCC99', // soft orange
   '#CC99FF', // soft purple
-  '#FFD699', // soft yellow-orange
   '#99FFD6', // soft mint
   '#FF99CC', // soft pink
-  '#B3FF99', // soft lime
-  '#99E6FF'  // soft sky blue
+  '#A3A3FF', // soft indigo
+  '#B2FFFA', // soft aqua
+  '#FFF799', // soft yellow
+  '#B3E6FF', // soft baby blue
 ];
 
 export type RootStackParamList = {
@@ -207,8 +209,8 @@ export default function HomeScreen() {
   const moreThan1Team = filteredTeams.length >= 2;
 
   return (
-    <SafeAreaView style={{ padding: 20 }}>
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 }}>
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={{ padding: 10, alignItems: 'center' }}>
         <ModeToggle mode={mode} onChange={setMode} />
       </View>
       {/* <Text style={{ fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, width: 70 }}>
@@ -226,6 +228,7 @@ export default function HomeScreen() {
         maxPlayers={teamCapacity}
         allPlayers={allPlayers}
         setAllPlayers={setAllPlayers}
+        mode={mode}
       />
 
       <TouchableOpacity
@@ -238,6 +241,8 @@ export default function HomeScreen() {
       >
         <Text style={styles.startGameButtonText}>Start Game</Text>
       </TouchableOpacity>
+
+      <Footer />
     </SafeAreaView>
   );
 }
@@ -264,7 +269,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   startGameButton: {
-    bottom: -180,
+    position: 'absolute',
+    bottom: 100,
     width: 200,
     alignSelf: 'center',
     backgroundColor: '#2196F3',

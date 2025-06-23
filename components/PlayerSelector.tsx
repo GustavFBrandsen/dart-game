@@ -103,35 +103,31 @@ export default function PlayerSelector({
             <TouchableOpacity
               style={[
                 styles.playerRow,
-                selected && { backgroundColor: `${teamColor}33` }, // 20% opacity
-                { 
-                  backgroundColor: color ? color : 'white',
-                  opacity: isAssigned ? 0.7 : 1,
-                }
+                selected && { backgroundColor: `${teamColor}33` },
+                isAssigned && { backgroundColor: `${color}CC` }, // Slightly darker for assigned
               ]}
               onPress={() => {
                 if (isAssigned && onAssignedPlayerPress) {
                   onAssignedPlayerPress(item);
                 } else if (!isAssigned) {
-                  // Normal selection logic
-                  const newSelection = selectedPlayers.some(p => p.id === item.id)
-                    ? selectedPlayers.filter(p => p.id !== item.id)
-                    : [...selectedPlayers, item];
-                  onSelectionChange(newSelection);
+                  togglePlayer(item);
                 }
               }}
             >
               <View
                 style={[
                   styles.checkbox,
-                  (selected || isAssigned) && { borderColor: color || teamColor, backgroundColor: color || teamColor },
+                  (selected || isAssigned) && { 
+                    borderColor: color || teamColor, 
+                    backgroundColor: color || teamColor 
+                  },
                 ]}
               >
                 {(selected || isAssigned) && (
                   <Text style={styles.checkmark}>✓</Text>
                 )}
               </View>
-              <Text style={[styles.playerName, { color: isAssigned ? '#fff' : '#222' }]}>
+              <Text style={[styles.playerName, isAssigned && { color: '#fff' }]}>
                 {item.name}
               </Text>
             </TouchableOpacity>

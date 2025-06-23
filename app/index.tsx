@@ -65,74 +65,66 @@ export default function HomeScreen() {
   const createNewTeam = () => {
     const newTeam = {
       id: Crypto.randomUUID(),
-      color: TEAM_COLORS[currentTeamIndex % TEAM_COLORS.length],
+      color: TEAM_COLORS[teams.length % TEAM_COLORS.length], // Use teams.length for color
       players: []
     };
     setTeams(prev => [...prev, newTeam]);
     return newTeam;
   };
 
-  // Handle player selection
+  // Handle player selection and assign immediately
   const handlePlayerSelect = (players: Player[]) => {
     setSelectedPlayers(players);
-  };
 
-  // Assign selected players to current team (only for duos)
-  const assignToTeam = () => {
-    if (selectedPlayers.length === 0) {
-      alert('Please select at least one player');
-      return;
-    }
-
+    // Assign after every player press
     let updatedTeams = [...teams];
-    let fillingHole = false;
 
-    // If the current team slot doesn't exist, create it
+    // Ensure the current team exists
     if (!updatedTeams[currentTeamIndex]) {
-      const newTeam = {
-        id: Crypto.randomUUID(),
-        color: TEAM_COLORS[currentTeamIndex % TEAM_COLORS.length],
-        players: [],
-      };
+      const newTeam = createNewTeam();
       updatedTeams[currentTeamIndex] = newTeam;
     }
 
-    // If the current team is empty, we're filling a hole
-    if (updatedTeams[currentTeamIndex].players.length === 0) {
-      fillingHole = true;
-    }
-
-    // Assign selected players to the current team slot
+    // Assign players to the team
     updatedTeams[currentTeamIndex] = {
       ...updatedTeams[currentTeamIndex],
-      players: [...selectedPlayers],
+      players: [...players],
     };
 
     setTeams(updatedTeams);
+    setAssignedPlayerIds(prev => {
+      // Add only new player IDs
+      const newIds = players.map(p => p.id).filter(id => !prev.includes(id));
+      return [...prev, ...newIds];
+    });
 
-    setAssignedPlayerIds(prev => [
-      ...prev,
-      ...selectedPlayers.map(p => p.id)
-    ]);
-
-    setSelectedPlayers([]);
-
-    // If we just filled a previously empty team, jump to the end
-    if (fillingHole) {
-      setCurrentTeamIndex(updatedTeams.length);
-    } else {
-      setCurrentTeamIndex(prev => prev + 1);
-    }
-
-    // Build a map of assigned playerId to their team color
+    // Update player colors
     const assignedPlayerColors = updatedTeams.reduce((acc, team) => {
       team.players.forEach(player => {
         acc[player.id] = team.color;
       });
       return acc;
     }, {} as Record<string, string>);
-
     setAssignedPlayerColors(assignedPlayerColors);
+
+    // Only jump to next team if full
+    if (players.length === teamCapacity) {
+      // Find the next incomplete team
+      const nextTeamIndex = findFirstIncompleteTeam(updatedTeams, teamCapacity);
+      setCurrentTeamIndex(nextTeamIndex);
+      setSelectedPlayers(updatedTeams[nextTeamIndex]?.players || []);
+    }
+  };
+
+  const findFirstIncompleteTeam = (teams: Team[], teamCapacity: number) => {
+    // First check existing teams for any that aren't full
+    for (let i = 0; i < teams.length; i++) {
+      if (teams[i].players.length < teamCapacity) {
+        return i;
+      }
+    }
+    // If all teams are full, return the next index (which will create a new team)
+    return teams.length;
   };
 
   const startGame = (filteredTeams: Team[]) => {
@@ -154,48 +146,35 @@ export default function HomeScreen() {
     ? 'Select players' 
     : `Select players for Team ${currentTeamIndex + 1}`;
 
-  // Auto-assign when team is full (only in duos mode)
-  useEffect(() => {
-    if (selectedPlayers.length === teamCapacity) {
-      assignToTeam();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPlayers, teamCapacity, mode]);
-
   const handleAssignedPlayerPress = (player: Player) => {
-    // Find the team index this player was in
-    const teamIndex = teams.findIndex(team => team.players.some(p => p.id === player.id));
-
-    // Remove player from all teams, but DO NOT filter out empty teams
-    const updatedTeams = teams.map(team => ({
-      ...team,
-      players: team.players.filter(p => p.id !== player.id)
-    }));
+    const updatedTeams = [...teams];
+    
+    // Remove player from their team
+    for (let i = 0; i < updatedTeams.length; i++) {
+      updatedTeams[i] = {
+        ...updatedTeams[i],
+        players: updatedTeams[i].players.filter(p => p.id !== player.id)
+      };
+    }
 
     setTeams(updatedTeams);
-
-    // Remove from assignedPlayerIds
     setAssignedPlayerIds(prev => prev.filter(id => id !== player.id));
-
-    // Remove from assignedPlayerColors
+    
+    // Update colors
     setAssignedPlayerColors(prev => {
       const newColors = { ...prev };
       delete newColors[player.id];
       return newColors;
     });
 
-    // Remove from selectedPlayers if present
-    setSelectedPlayers(prev => prev.filter(p => p.id !== player.id));
-
-    // Set currentTeamIndex to the team that was just emptied (if it still exists)
-    if (teamIndex !== -1) {
-      setCurrentTeamIndex(teamIndex);
-
-      // NEW: Set selectedPlayers to the remaining players in that team
-      const remainingPlayers = updatedTeams[teamIndex].players;
-      setSelectedPlayers(remainingPlayers);
+    // Find first incomplete team to focus on
+    const nextTeamIndex = findFirstIncompleteTeam(updatedTeams, teamCapacity);
+    setCurrentTeamIndex(nextTeamIndex);
+    
+    // Select remaining players in the newly focused team
+    if (updatedTeams[nextTeamIndex]) {
+      setSelectedPlayers(updatedTeams[nextTeamIndex].players);
     } else {
-      setCurrentTeamIndex(updatedTeams.length);
       setSelectedPlayers([]);
     }
   };

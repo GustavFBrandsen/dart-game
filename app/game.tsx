@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, Vibration, View } from 'react-native';
 
@@ -14,8 +14,18 @@ function shuffleArray<T>(array: T[]): T[] {
   return arr;
 }
 
+// Add this helper function above your component
+function rotatePlayers(team) {
+  if (!team.players || team.players.length < 2) return team;
+  return {
+    ...team,
+    players: [...team.players.slice(1), team.players[0]],
+  };
+}
+
 export default function GameScreen() {
   const { mode, teams, teamCapacity } = useLocalSearchParams();
+  const navigation = useNavigation();
   // Randomize teams order on mount
   const parsedTeams = React.useMemo(() => {
     const t = typeof teams === 'string' ? JSON.parse(teams) : teams;
@@ -29,9 +39,12 @@ export default function GameScreen() {
   const [cellModes, setCellModes] = useState<{ [key: string]: number }>({});
   const [turnIdx, setTurnIdx] = useState(0);
   const [lastTurnIdx, setLastTurnIdx] = useState<number | null>(null);
+  // Add a state to hold the teams with their rotated player order
+  const [teamsWithOrder, setTeamsWithOrder] = useState(parsedTeams);
+  const [popup, setPopup] = useState<string | null>(null);
 
   // Calculate a shared width for all columns (including the first column)
-  const numCols = parsedTeams.length + 1;
+  const numCols = teamsWithOrder.length + 1;
   const cellWidth = Math.max(100, screenWidth / numCols); // or just 100 if you want fixed width
   const labelWidth = cellWidth; // fixed width for the first column
 
@@ -73,11 +86,36 @@ export default function GameScreen() {
   // Handle end turn button
   const handleEndTurn = () => {
     setLastTurnIdx(turnIdx);
-    setTurnIdx((turnIdx + 1) % parsedTeams.length);
+    setTeamsWithOrder(prev =>
+      prev.map((team, idx) =>
+        idx === turnIdx ? rotatePlayers(team) : team
+      )
+    );
+    const nextTurnIdx = (turnIdx + 1) % teamsWithOrder.length;
+    setTurnIdx(nextTurnIdx);
+
+    // Show custom popup for next player's turn
+    const nextPlayer = teamsWithOrder[nextTurnIdx]?.players?.[0]?.name || 'Player';
+    setPopup(`${nextPlayer}'s turn`);
+    setTimeout(() => setPopup(null), 3000);
   };
+
+  React.useEffect(() => {
+    const currentTeam = teamsWithOrder[turnIdx];
+    const currentPlayer = currentTeam?.players?.[0]?.name || 'Player';
+    navigation.setOptions({ title: `${currentPlayer}'s turn` });
+  }, [turnIdx, teamsWithOrder, navigation]);
 
   return (
     <View style={{ flex: 1, flexDirection: 'row' }}>
+      {/* Custom popup */}
+      {popup && (
+        <View style={styles.popupOverlay}>
+          <View style={styles.popupContainer}>
+            <Text style={styles.popupText}>{popup}</Text>
+          </View>
+        </View>
+      )}
       {/* Fixed first column */}
       <View>
         {/* Header cell */}
@@ -96,7 +134,7 @@ export default function GameScreen() {
         <View>
           {/* Header row */}
           <View style={{ flexDirection: 'row' }}>
-            {parsedTeams.map((team, idx) => (
+            {teamsWithOrder.map((team, idx) => (
               <View
                 style={[
                   styles.headerCell,
@@ -105,16 +143,19 @@ export default function GameScreen() {
                 ]}
                 key={team.id || idx}
               >
-                <Text style={styles.headerText}>
-                  {team.players.map(p => p.name).join(', ')}
-                </Text>
+                {/* Render each player name on a new line */}
+                {team.players.map((p, i) => (
+                  <Text style={styles.headerText} key={p.id || i}>
+                    {p.name}
+                  </Text>
+                ))}
               </View>
             ))}
           </View>
           {/* Data rows */}
           {rowLabels.map((_, rowIdx) => (
             <View style={{ flexDirection: 'row' }} key={rowIdx}>
-              {parsedTeams.map((_, teamIdx) => {
+              {teamsWithOrder.map((_, teamIdx) => {
                 const key = `${rowIdx}_${teamIdx}`;
                 const mode = cellModes[key] || 0;
                 const isActive = teamIdx === turnIdx;
@@ -195,5 +236,29 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 20,
+  },
+  popupOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', // darken the background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  popupContainer: {
+    backgroundColor: '#222',
+    borderRadius: 16,
+    paddingHorizontal: 36,
+    paddingVertical: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.97,
+    marginTop: -75,
+  },
+  popupText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
